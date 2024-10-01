@@ -1,0 +1,16 @@
+Source,Contribution
+Prediction,0.5
+brick_factory,1.2
+outpatient_consultation_count,1.1
+marginalization,-0.8
+hospitalization_count,-0.8
+emission_concentration,-0.6
+stationary_risk_sources,0.2
+carcinogenic_water_sources_count,-0.1
+water_sources_carcinogens_2B,-0.0
+water_sources_carcinogens_1,-0.0
+support_count,-0.0
+social_assistance_count,0.0
+electricity_fuel,-0.0
+oil_fuel,-0.0
+firewood_fuel,0.0

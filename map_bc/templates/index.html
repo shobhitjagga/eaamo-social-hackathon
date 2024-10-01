@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARE</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        #map { height: 600px; }
+        #tabs {
+            display: flex;
+            background-color: #007bff;
+            padding: 10px;
+            border-bottom: 2px solid #0056b3;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            color: white;
+            margin-right: 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .tab:hover {
+            background-color: #0056b3;
+        }
+        .active {
+            background-color: #0056b3;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 10px;
+        }
+        .active-content {
+            display: block;
+        }
+        #yearTabs {
+            margin-top: 10px;
+            padding: 5px 0; /* Reduced padding */
+        }
+        .year-tab {
+            display: inline-block;
+            padding: 5px; /* Reduced padding */
+            cursor: pointer;
+            color: #007bff;
+            border: 0.5px solid #007bff;
+            border-radius: 2px;
+            margin: 0 1px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .year-tab:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        #infoPanel {
+            display: none; 
+            position: fixed; 
+            background: white; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            padding: 15px; 
+            z-index: 1000; 
+            right: 20px; 
+            top: 20px; 
+            max-width: 350px; /* Increased max-width */
+            overflow-y: auto; 
+            max-height: 400px; 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        #infoPanel h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.5em;
+            color: #333;
+        }
+        #infoPanel button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            float: right;
+            transition: background-color 0.3s;
+        }
+        #infoPanel button:hover {
+            background-color: #0056b3;
+        }
+        h2, h3 {
+            color: #007bff;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 5px 0 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%; /* Full width */
+            border-collapse: collapse; /* Collapse borders */
+        }
+        th, td {
+            padding: 10px; /* Padding for cells */
+            border: 1px solid #ddd; /* Border for cells */
+            text-align: left; /* Align text to the left */
+        }
+        th {
+            background-color: #007bff; /* Header background color */
+            color: white; /* Header text color */
+        }
+    </style>
+</head>
+<body>
+    <div id="tabs">
+        <div class="tab active" onclick="openTab(event, 'mapTab')">Map</div>
+        <div class="tab" onclick="openTab(event, 'multipleInputsTab')">Add New Sources</div>
+        <div class="tab" onclick="openTab(event, 'inputTab')">Budget Allocation</div>
+        <div class="tab" onclick="openTab(event, 'additionalInputTab')">National Budget</div>
+    </div>
+
+    <div id="yearTabs">
+        <div class="year-tab" onclick="loadYearData(2008)">2008</div>
+        <div class="year-tab" onclick="loadYearData(2009)">2009</div>
+        <div class="year-tab" onclick="loadYearData(2010)">2010</div>
+        <div class="year-tab" onclick="loadYearData(2011)">2011</div>
+        <div class="year-tab" onclick="loadYearData(2012)">2012</div>
+        <div class="year-tab" onclick="loadYearData(2013)">2013</div>
+        <div class="year-tab" onclick="loadYearData(2014)">2014</div>
+        <div class="year-tab" onclick="loadYearData(2015)">2015</div>
+        <div class="year-tab" onclick="loadYearData(2016)">2016</div>
+        <div class="year-tab" onclick="loadYearData(2017)">2017</div>
+        <div class="year-tab" onclick="loadYearData(2018)">2018</div>
+        <div class="year-tab" onclick="loadYearData(2019)">2019</div>
+        <div class="year-tab" onclick="loadYearData(2020)">2020</div>
+        <div class="year-tab" onclick="loadYearData(2021)">2021</div>
+        <div class="year-tab" onclick="loadYearData(2022)">2022</div>
+    </div>
+
+    <div id="mapTab" class="tab-content active-content">
+        <div id="map"></div>
+        <div id="infoPanel">
+            <button onclick="document.getElementById('infoPanel').style.display='none'">Close</button>
+            <h3 id="munname"></h3>
+            <div id="infoContent"></div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="multipleInputsTab">
+        <h2>Add new sources of pollution or health</h2>
+        <form method="post" action="/add-health-source" id="form1">
+            <h3>Health source</h3>
+            <!-- <label for="municipalitySelect">Municipality name:</label> -->
+            <!-- <select id="municipalitySelect" name="municipalitySelect" required> -->
+                <!-- <option value="">Select a municipality</option> -->
+            <!-- </select> -->
+            <!-- <br> -->
+            <label for="scode">State Code:</label>
+            <input type="text" id="scode" name="scode" required>
+            <label for="mcode">Municipality Code:</label>
+            <input type="text" id="mcode" name="mcode" required>
+            <label for="healthType">Type of health source:</label>
+            <select id="healthType" name="healthType" required>
+                <option value="">Select type</option>
+            </select>
+            <br><br>
+            <label for="count">Count:</label>
+            <input type="text" id="count" name="count" required>
+            <!-- <label for="input11Field">Municipality name:</label>
+            <input type="text" id="input11Field" required>
+            <label for="input12Field">Type of health source:</label>
+            <input type="text" id="input12Field" required>
+            <label for="input13Field">Count:</label>
+            <input type="text" id="input13Field" required> -->
+            <button type="submit">Submit</button>
+        </form>
+
+        <form method="post" action="/add-water-source" id="form2">
+            <h3>Add a water source</h3>
+            <label for="scode">State Code:</label>
+            <input type="text" id="scode" name="scode" required>
+            <label for="mcode">Municipality Code:</label>
+            <input type="text" id="mcode" name="mcode" required>
+            <label for="iarc1">IARC 1 concentration:</label>
+            <input type="text" id="iarc1" name="iarc1" required>
+            <label for="iarc2">IARC 2B concentration:</label>
+            <input type="text" id="iarc2" name="iarc2" required>
+            <button type="submit">Submit</button>
+        </form>
+        <form method="post" action="/add-emission-source" id="form3">
+            <h3>Add an emission source</h3>
+            <label for="scode">State Code:</label>
+            <input type="text" id="scode" name="scode" required>
+            <label for="mcode">Municipality Code:</label>
+            <input type="text" id="mcode" name="mcode" required>
+            <label for="emission">Carcinogenic emission concentration:</label>
+            <input type="text" id="emission" name="emission" required>
+            <button type="submit">Submit</button>
+        </form>
+        <form method="post" action="/add-st-source" id="form4"></form>
+            <h3>Add a stationary pollution source</h3>
+            <label for="scode">State Code:</label>
+            <input type="text" id="scode" name="scode" required>
+            <label for="mcode">Municipality Code:</label>
+            <input type="text" id="mcode" name="mcode" required>
+            <label for="stRisk">Type of stationary source:</label>
+            <select id="stRisk" name="stRisk" required>
+                <br><br>
+            <label for="stsource">Count:</label>
+            <input type="text" id="stsource" name="stsource" required>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <div id="inputTab" class="tab-content">
+        <h2>Budget Allocation</h2>
+        <form id="inputForm">
+            <label for="inputField">Total Budget (MXN):</label>
+            <input type="text" id="inputField" required>
+            <label for="sc">State Code:</label>
+            <input type="text" id="sc" required>
+            <label for="mc">Municipality Code:</label>
+            <input type="text" id="mc" required>
+            <h3>Healthcare Facilities</h3>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <label for="hcfCost" style="margin-right: 10px;">Cost per unit:</label>
+                <input type="text" id="hcfCost" required style="flex: 1; margin-right: 10px; padding: 8px;">
+                <label for="heMax" style="margin-right: 10px;">Max Budget Allocation:</label>
+                <input type="text" id="heMax" required style="flex: 1; padding: 8px;">
+            </div>
+        
+            <h3>Stationary Pollution Sources</h3>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <label for="spCost" style="margin-right: 10px;">Cost per unit:</label>
+                <input type="text" id="spCost" required style="flex: 1; margin-right: 10px; padding: 8px;">
+                <label for="stMax" style="margin-right: 10px;">Max Budget Allocation:</label>
+                <input type="text" id="stMax" required style="flex: 1; padding: 8px;">
+            </div>
+        
+            <h3>Water Pollution Sources</h3>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <label for="wpCost" style="margin-right: 10px;">Cost per unit:</label>
+                <input type="text" id="wpCost" required style="flex: 1; margin-right: 10px; padding: 8px;">
+                <label for="waMax" style="margin-right: 10px;">Max Budget Allocation:</label>
+                <input type="text" id="waMax" required style="flex: 1; padding: 8px;">
+            </div>
+        
+            <h3>Emission Sources</h3>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <label for="emCost" style="margin-right: 10px;">Cost per unit:</label>
+                <input type="text" id="emCost" required style="flex: 1; margin-right: 10px; padding: 8px;">
+                <label for="emMax" style="margin-right: 10px;">Max Budget Allocation:</label>
+                <input type="text" id="emMax" required style="flex: 1; padding: 8px;">
+            </div>
+        
+            <h3>Marginalization Reduction</h3>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <label for="mrCost" style="margin-right: 10px;">Cost per unit:</label>
+                <input type="text" id="mrCost" required style="flex: 1; margin-right: 10px; padding: 8px;">
+                <label for="maMax" style="margin-right: 10px;">Max Budget Allocation:</label>
+                <input type="text" id="maMax" required style="flex: 1; padding: 8px;">
+            </div>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    <div id="result"></div>
+
+    <div id="additionalInputTab" class="tab-content">
+        <h2>National Budget Allocation</h2>
+        <form id="additionalInputForm">
+            <label for="additionalInputField">Enter National Budget:</label>
+            <input type="text" id="additionalInputField" required>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        let riskData = {};
+        let currentYear = 2022;
+        let map = L.map('map').setView([23.6345, -102.5528], 5);
+        let riskDataCache = {};
+        let currentGeoJsonLayer = null; 
+
+        loadYearData(2022);
+
+        function loadYearData(year) {
+            if (riskDataCache[year]) {
+                console.log('Using cached data for year:', year);
+                renderMunicipalities(riskDataCache[year]); 
+            } else {
+                console.log('Loading data for year:', year);
+                fetch(`/static/risks/riskprofile.${year}.csv`)
+                    .then(response => response.text())
+                    .then(text => {
+                        const rows = text.split('\n').slice(1);
+                        const lastRowIndex = rows.length - 1;
+                        rows.forEach((row, index) => {
+                            if (index === lastRowIndex) return;
+                            const cols = row.split(',');
+                            if (cols.length < 3) return;
+
+                            const stateCode = cols[0].trim();
+                            const municipalityCode = cols[1].trim();
+                            const riskValue = parseFloat(cols[2].trim());
+
+                            if (!isNaN(riskValue)) { 
+                                riskData[`${stateCode}.${municipalityCode}`] = riskValue;
+                            }
+                        });
+                        riskDataCache[year] = riskData; // Cache the data
+                        renderMunicipalities(); // Call to render after loading risk data
+                    });
+            }
+            if (currentGeoJsonLayer) {
+                map.removeLayer(currentGeoJsonLayer);
+            }
+            const stRiskTypes = [
+            "dumps","biomass","carpentry","cement_gypsum","sugarcane_cultivation", 	"chemical_manufacturing","pesticide_manufacturing","gas_stations", 	"incinerator","sugar_mill","brick_factory","mining","paper_mill", 	"solvent_paint","high_traffic_supply","high_traffic_alameda","high_traffic_station"
+            ];
+            const healthTypes = [
+                "Support",
+                "Outpatient Consultation",
+                "Social assistance",
+                "Hospitalization"
+            ];
+            fetch('/static/municipalities.json')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('municipalitySelect');
+                    data.forEach(municipality => {
+                        const option = document.createElement('option');
+                        option.value = municipality;
+                        option.textContent = municipality;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading municipality names:', error));
+            function populateStRisk() {
+                const select = document.getElementById('stRisk');
+                stRiskTypes.forEach(stRisk => {
+                    const option = document.createElement('option');
+                    option.value = stRisk;
+                    option.textContent = stRisk;
+                    select.appendChild(option);
+                });
+            }
+
+            function populateHealthTypes() {
+                const select = document.getElementById('healthType');
+                healthTypes.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    select.appendChild(option);
+                });
+            }
+
+            window.onload = function() {
+                populateStRisk();
+                populateHealthTypes();
+            };
+        }
+        document.getElementById('inputForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const budget = parseFloat(document.getElementById('inputField').value);
+            const stateCode = document.getElementById('sc').value;
+            const municipalityCode = document.getElementById('mc').value;
+            
+            let rewards = {};
+            
+            fetch(`/static/risks/riskprofile.${stateCode}.${municipalityCode}.${currentYear}.csv`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.statusText);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    const rows = data.split('\n').slice(1); // Skip the header row
+                    
+                    rows.forEach(row => {
+                        if (row.trim() === '') return; // Skip empty rows
+                        const cols = row.split(',');
+                        const sourceType = cols[0].trim(); // First column
+                        const rewardValue = parseFloat(cols[1].trim()); // Second column
+                        let stype = 'Stationary Pollution Sources'
+                        if (sourceType.match('support|social_assist|hospital|outpatient')) {
+                            stype = 'Healthcare Facilities'
+                        } else if(sourceType.match('water')) {
+                            stype = 'Water Pollution Sources'
+                        } else if(sourceType.match('emission')) {
+                            stype = 'Emission Sources'
+                        } else if(sourceType.match('marginalization')) {
+                            stype = 'Marginalization Reduction'
+                        }
+                        switch (stype) {
+                            case 'Healthcare Facilities':
+                                if (!isNaN(rewardValue) && !isNaN(parseFloat(document.getElementById('hcfCost').value))) {
+                                    if (rewards[stype] === undefined){ 
+                                        rewards[stype] = 0;
+                                    }else{
+                                        rewards[stype] += Math.max(-1 * rewardValue / parseFloat(document.getElementById('hcfCost').value),0);
+                                    }
+                                }
+                                break;
+                            case 'Stationary Pollution Sources':
+                                if (!isNaN(rewardValue) && !isNaN(parseFloat(document.getElementById('spCost').value))) {
+                                    if (rewards[stype] === undefined){ 
+                                        rewards[stype] = 0;
+                                    }else{
+                                    rewards[stype] += Math.max(rewardValue / parseFloat(document.getElementById('spCost').value),0);
+                                    }
+                                }
+                                break;
+                            case 'Water Pollution Sources':
+                                if (!isNaN(rewardValue) && !isNaN(parseFloat(document.getElementById('wpCost').value))) {
+                                    if (rewards[stype] === undefined){ 
+                                        rewards[stype] = 0;
+                                    }else{
+                                    rewards[stype] += Math.max(rewardValue / parseFloat(document.getElementById('wpCost').value),0);
+                                    }
+                                }
+                                break;
+                            case 'Emission Sources':
+                                if (!isNaN(rewardValue) && !isNaN(parseFloat(document.getElementById('emCost').value))) {
+                                    if (rewards[stype] === undefined){ 
+                                        rewards[stype] = 0;
+                                    }else{
+                                    rewards[stype] += Math.max(rewardValue / parseFloat(document.getElementById('emCost').value,0));
+                                    }
+                                }
+                                break;
+                            case 'Marginalization Reduction':
+                                if (!isNaN(rewardValue) && !isNaN(parseFloat(document.getElementById('mrCost').value))) {
+                                    if (rewards[stype] === undefined){ 
+                                        rewards[stype] = 0;
+                                    }else{
+                                    rewards[stype] += Math.max(-1*rewardValue / parseFloat(document.getElementById('mrCost').value),0);
+                                    }
+                                }
+                                break;
+                            default:
+                                console.warn(`Unknown source type: ${stype}`);
+                        }
+                    });
+                    const allocation = calculateAllocations(rewards, budget);
+                    displayResults(allocation);
+                })
+                .catch(error => {
+                    console.log(stateCode, municipalityCode, currentYear);
+                    console.error('There was a problem with the fetch operation:', error);
+                    alert('Risk profile not available');
+                });
+        });
+        function calculateAllocations(rewards, totalBudget) {
+            const totalRewards = Object.values(rewards).reduce((sum, reward) => sum + reward, 0);
+            const allocation = {};
+            if (totalRewards === 0) return allocation; // Avoid division by zero
+
+            // Step 1: Calculate proportional allocations
+            for (const sourceType in rewards) {
+                const proportion = rewards[sourceType] / totalRewards;
+                let proposedAllocation = proportion * totalBudget;
+                const maxBudget = parseFloat(document.getElementById(sourceType.substring(0, 2).toLowerCase() + 'Max').value); // Remove spaces for ID
+
+                // Cap the proposed allocation to the max budget if necessary
+                if (proposedAllocation > maxBudget) {
+                    proposedAllocation = maxBudget;
+                }
+                allocation[sourceType] = proposedAllocation;
+            }
+
+            // Step 2: Adjust allocations to use all totalRewards
+            const totalAllocated = Object.values(allocation).reduce((sum, alloc) => sum + alloc, 0);
+            const remainingBudget = totalBudget - totalAllocated;
+
+            if (remainingBudget > 0) {
+                // Step 3: Distribute remaining budget proportionally based on remaining rewards
+                const remainingRewards = Object.entries(rewards).filter(([sourceType]) => allocation[sourceType] < parseFloat(document.getElementById(sourceType.substring(0, 2).toLowerCase() + 'Max').value));
+                
+                for (const [sourceType, reward] of remainingRewards) {
+                    const proportion = reward / totalRewards;
+                    let additionalAllocation = proportion * remainingBudget;
+
+                    const maxBudget = parseFloat(document.getElementById(sourceType.substring(0, 2).toLowerCase() + 'Max').value);
+                    const availableBudget = maxBudget - allocation[sourceType];
+
+                    // Cap the additional allocation to the available budget if necessary
+                    if (additionalAllocation > availableBudget) {
+                        additionalAllocation = availableBudget;
+                    }
+
+                    allocation[sourceType] += additionalAllocation;
+                }
+            }
+
+            return allocation;
+        }
+
+        function displayResults(allocation) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+            const header = document.createElement('h3');
+            header.textContent = 'Allocations';
+            resultDiv.appendChild(header);
+            const list = document.createElement('ul');
+            list.style.listStyleType = 'none'; // Remove default bullets
+            list.style.padding = '0'; // Remove default padding
+            for (const sourceType in allocation) {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${sourceType}: ${allocation[sourceType].toFixed(2)} MXN`;
+                listItem.style.marginBottom = '10px'; // Space between items
+                listItem.style.fontSize = '1.2em'; // Slightly larger text
+                listItem.style.color = '#333'; // Darker text color
+                list.appendChild(listItem);
+            }
+            resultDiv.appendChild(list);
+        }
+        function renderMunicipalities() {
+            fetch('/static/mexico_municipalities.geojson')
+            .then(response => response.json())
+            .then(data => {
+                currentGeoJsonLayer = L.geoJSON(data, {
+                    style: function(feature) {
+                        const stateCode = feature.properties.CVE_ENT;
+                        const municipalityCode = feature.properties.CVE_MUN;
+                        const riskValue = riskData[`${stateCode}.${municipalityCode}`] || -10000;
+                        const { fillColor, opacity } = getColorAndOpacity(riskValue);
+                        return { 
+                            fillColor: fillColor, 
+                            fillOpacity: opacity, 
+                            color: "transparent", 
+                            weight: 10
+                        };
+                    },
+                    onEachFeature: function(feature, layer) {
+                        layer.on('click', function() {
+                            displayMunicipalityInfo(feature.properties);
+                        });
+                    }
+                }).addTo(map);
+            });
+        }
+
+        function getColorAndOpacity(riskValue) {
+            let fillColor, opacity;
+            if (riskValue > 1) {
+                fillColor = 'red';
+                opacity = Math.min(Math.max(((riskValue-1)/ 5), 0.4), 1);
+            } else if (riskValue > 1) {
+                fillColor = 'yellow';
+                opacity = Math.min(Math.max((riskValue / 100), 0.1), 1);
+            } else if(riskValue > -999) {
+                fillColor = 'green';
+                opacity = Math.min(Math.max((-1*riskValue / 5), 0.4), 1);
+            } else {
+                fillColor = 'white';
+                opacity = 0;
+            }
+            return {fillColor, opacity};
+        }
+        function clearAllocations() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = ''; // Clear the div content
+        }
+        function displayMunicipalityInfo(properties) {
+            const stateCode = properties.CVE_ENT;
+            const municipalityCode = properties.CVE_MUN;
+            const munName = properties.NOMGEO;
+            const filename = `riskprofile.${stateCode}.${municipalityCode}.${currentYear}.csv`;
+
+            fetch(`/static/risks/${filename}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.statusText);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    const rows = data.split('\n').slice(1); // Skip the header row
+                    let tableHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Source</th>
+                                    <th>Contribution</th>
+                                </tr>
+                            </thead>
+                            <tbody>`
+                    ;
+                    rows.forEach(row => {
+                        if (row.trim() === '') return; // Skip empty rows
+                        const cols = row.split(',');
+                        tableHTML += `
+                            <tr>
+                                <td>${cols[0]}</td>
+                                <td>${cols[1]}</td>
+                            </tr>`
+                        ;
+                    });
+                    tableHTML += `
+                            </tbody>
+                        </table>`
+                    ;
+                    document.getElementById('munname').innerHTML = munName + '('+stateCode+','+municipalityCode+')'; 
+                    document.getElementById('infoContent').innerHTML = tableHTML; 
+                    document.getElementById('infoPanel').style.display = 'block';
+                })
+                .catch(error => {
+                    console.log(stateCode, municipalityCode, currentYear);
+                    console.error('There was a problem with the fetch operation:', error);
+                    alert('Municipality information not available');
+                });
+        }
+
+        function openTab(evt, tabName) {
+            clearAllocations();
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";  
+            }
+            tablinks = document.getElementsByClassName("tab");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";  
+            evt.currentTarget.className += " active";
+
+            // Hide year tabs for non-map tabs
+            if (tabName !== 'mapTab') {
+                document.getElementById('yearTabs').style.display = 'none';
+            } else {
+                document.getElementById('yearTabs').style.display = 'block';
+            }
+        }
+
+        // Initialize the map
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+    </script>
+</body>
+</html>
