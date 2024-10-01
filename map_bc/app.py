@@ -25,7 +25,7 @@ def process_data(municipality, source_type, count):
 
 def compute_contribution(df,model,explainer,stateCode,munCode):
     print(df[fcol])
-    print(df['outpatient_consultation'])
+    # print(df['outpatient_consultation'])
     shap_values = explainer.shap_values(df[fcol])
     expected_value = explainer.expected_value
     temp_df = pd.DataFrame({
